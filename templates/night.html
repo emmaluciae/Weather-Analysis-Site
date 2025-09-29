@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Night Sky</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <main class="wrap">
+      <h1 class="title">🌙 Night Sky ✨</h1>
+
+      <section class="card">
+        <h2>Moon Phase</h2>
+        <div id="moon-phase">Loading...</div>
+      </section>
+
+      <section class="card">
+        <h2>Planets Tonight</h2>
+        <div id="planets">Loading...</div>
+      </section>
+
+      <section class="card">
+        <h2>Meteor Showers</h2>
+        <div id="meteors">Loading...</div>
+      </section>
+    </main>
+
+    <!-- ✅ Keep nav consistent across pages -->
+    <div class="navigation">
+      <ul>
+        <li class="list {% if request.path == '/' %}active{% endif %}">
+          <a href="/">
+            <span class="icon">☀️</span>
+            <span class="text">Weather</span>
+          </a>
+        </li>
+        <li class="list {% if request.path == '/night' %}active{% endif %}">
+          <a href="/night">
+            <span class="icon">🌙</span>
+            <span class="text">Night Sky</span>
+          </a>
+        </li>
+        <li class="list">
+          <a href="#">
+            <span class="icon">⭐</span>
+            <span class="text">Favorites</span>
+          </a>
+        </li>
+        <li class="list">
+          <a href="#">
+            <span class="icon">⚙️</span>
+            <span class="text">Settings</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

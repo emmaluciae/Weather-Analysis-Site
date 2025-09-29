@@ -1,0 +1,231 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Weather</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <main class="wrap">
+      <h1 class="title">☀️ Weather ☁️</h1>
+
+      <form method="get" action="/">
+        <input name="q" placeholder="City or place" value="{{ request.args.get('q','') }}" required>
+        <button type="submit">Search</button>
+      </form>
+
+      <!-- Unit toggle button -->
+      <button id="unitToggle" class="card" style="margin:10px auto; display:block;">
+        Switch to °F
+      </button>
+
+      {% if error %}
+        <div class="card warn">{{ error }}</div>
+      {% endif %}
+
+      {% if result %}
+        <section class="card">
+          <h2>{{ result.name }}</h2>
+          <p class="muted">{{ result.tz }} • {{ result.lat }}, {{ result.lon }}</p>
+          <div class="now">
+            <div class="temp">{{ result.temp|round|int }}°C</div>
+            <div class="desc">{{ result.desc }}</div>
+            <div class="wind">Wind {{ result.wind|round }} km/h</div>
+            <div class="time">As of {{ result.time }}</div>
+          </div>
+        </section>
+
+        <section class="grid">
+          <div class="tile"><span>High</span><strong>{{ result.tmax_today }}°C</strong></div>
+          <div class="tile"><span>Low</span><strong>{{ result.tmin_today }}°C</strong></div>
+          <div class="tile"><span>UV Max</span><strong>{{ result.uv_today }}</strong></div>
+          <div class="tile"><span>Precip (today)</span><strong>{{ result.prcp_today }} mm</strong></div>
+        </section>
+      {% endif %}
+    </main>
+
+      <div class="navigation">
+      <ul>
+        <li class="list {% if request.path == '/' %}active{% endif %}">
+          <a href="/">
+            <span class="icon">☀️</span>
+            <span class="text">Weather</span>
+          </a>
+        </li>
+        <li class="list {% if request.path == '/night' %}active{% endif %}">
+          <a href="/night">
+            <span class="icon">🌙</span>
+            <span class="text">Night Sky</span>
+          </a>
+        </li>
+        <li class="list">
+          <a href="#">
+            <span class="icon">⭐</span>
+            <span class="text">Favorites</span>
+          </a>
+        </li>
+        <li class="list">
+          <a href="#">
+            <span class="icon">⚙️</span>
+            <span class="text">Settings</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+    <div class="charts-grid">
+      <section class="chart-card">
+        <h2>7-Day Highs & Lows</h2>
+        <canvas id="dailyTemps"></canvas>
+      </section>
+
+      <section class="chart-card">
+        <h2>UV Index Trend</h2>
+        <canvas id="uvIndex"></canvas>
+      </section>
+
+      <section class="chart-card">
+        <h2>24-Hour Temp Trend</h2>
+        <canvas id="hourlyTemps"></canvas>
+      </section>
+    </div>
+
+    {% if result %}
+    <script>
+      // Pull arrays from Flask
+      const dailyLabelsRaw = {{ result.dates|tojson }};
+      let tmax = {{ result.tmax|tojson }};
+      let tmin = {{ result.tmin|tojson }};
+      const uv = {{ result.uv|tojson }};
+      const hourlyLabelsRaw = {{ result.hourly_time|tojson }};
+      let hourlyTemp = {{ result.hourly_temp|tojson }};
+
+      // Convert daily labels to short weekday names
+      const dailyLabels = dailyLabelsRaw.map(d => {
+        const date = new Date(d);
+        return date.toLocaleDateString('en-US', { weekday: 'short' });
+      });
+
+      // Convert hourly labels to just time (HH:MM)
+      const hourlyLabels = hourlyLabelsRaw.map(h => {
+        const date = new Date(h);
+        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      });
+
+      // --- Daily Highs & Lows ---
+      const dailyTempsChart = new Chart(document.getElementById('dailyTemps'), {
+        type: 'line',
+        data: {
+          labels: dailyLabels,
+          datasets: [
+            { label: 'High', data: tmax, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--accent'), fill: false },
+            { label: 'Low', data: tmin, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--muted'), fill: false }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      // --- UV Index ---
+      const uvIndexChart = new Chart(document.getElementById('uvIndex'), {
+        type: 'bar',
+        data: {
+          labels: dailyLabels,
+          datasets: [{ label: 'UV Index', data: uv, backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--accent') }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      // --- Hourly Temp Trend ---
+      const hourlyTempsChart = new Chart(document.getElementById('hourlyTemps'), {
+        type: 'line',
+        data: {
+          labels: hourlyLabels.slice(0,24),
+          datasets: [{
+            label: 'Temp (°C)',
+            data: hourlyTemp.slice(0,24),
+            borderColor: '#888',
+            pointBackgroundColor: '#ffb6c1',
+            pointRadius: 3,
+            pointHoverRadius: 7,
+            fill: false,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: getComputedStyle(document.documentElement).getPropertyValue('--fg') } } },
+          scales: {
+            x: { ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--fg') } },
+            y: { ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--fg') } }
+          }
+        }
+      });
+
+      // --- Unit toggle ---
+      let unit = "C";
+      const toggleBtn = document.getElementById("unitToggle");
+
+      function cToF(c) { return (c * 9/5 + 32).toFixed(1); }
+      function fToC(f) { return ((f - 32) * 5/9).toFixed(1); }
+
+      toggleBtn.addEventListener("click", () => {
+        const temps = document.querySelectorAll(".temp, .tile strong");
+
+        temps.forEach(el => {
+          let val = parseFloat(el.textContent);
+          if (isNaN(val)) return;
+          if (unit === "C") {
+            el.textContent = cToF(val) + "°F";
+          } else {
+            el.textContent = fToC(val) + "°C";
+          }
+        });
+
+        if (unit === "C") {
+          dailyTempsChart.data.datasets[0].data = tmax.map(cToF);
+          dailyTempsChart.data.datasets[1].data = tmin.map(cToF);
+          hourlyTempsChart.data.datasets[0].data = hourlyTemp.slice(0,24).map(cToF);
+          hourlyTempsChart.data.datasets[0].label = "Temp (°F)";
+          unit = "F";
+          toggleBtn.textContent = "Switch to °C";
+        } else {
+          dailyTempsChart.data.datasets[0].data = tmax;
+          dailyTempsChart.data.datasets[1].data = tmin;
+          hourlyTempsChart.data.datasets[0].data = hourlyTemp.slice(0,24);
+          hourlyTempsChart.data.datasets[0].label = "Temp (°C)";
+          unit = "C";
+          toggleBtn.textContent = "Switch to °F";
+        }
+
+        dailyTempsChart.update();
+        hourlyTempsChart.update();
+      });
+
+      // --- Dynamic background gradient ---
+      function tempToGradient(temp) {
+        const minTemp = 0; 
+        const maxTemp = 40;
+        const t = Math.min(Math.max((temp - minTemp) / (maxTemp - minTemp), 0), 1);
+
+        // blend between blue and pink
+        const cold = `rgba(30, 144, 255, ${0.5 + (1-t)*0.5})`;
+        const hot  = `rgba(255, 105, 180, ${0.5 + t*0.5})`;
+
+        return `
+          radial-gradient(circle at 30% 70%, ${cold}, transparent 60%),
+          radial-gradient(circle at 70% 30%, ${hot}, transparent 60%)`;
+      }
+
+      const currentTemp = {{ result.temp|tojson }};
+      document.body.style.backgroundImage = tempToGradient(currentTemp);
+    </script>
+    {% endif %}
+  </body>
+</html>
+
