@@ -2,15 +2,17 @@
 
 This project is a Flask-based web application that combines real-time weather forecasting with basic astronomy insights in a clean, responsive interface.
 
-## Screenshots of Current Look
+## 📸 Screenshots
 
-![Weather Page](assets/weather-page.png)
+<p align="center">
+  <img src="assets/weather-page.png" alt="Weather Page" width="45%"/>
+  <img src="assets/night-sky-page.png" alt="Night Sky Page" width="45%"/>
+</p>
 
-![Night Sky Page](assets/night-sky-page.png)
-
-![Weather Page Mobile](assets/weather-page-mobile.png)
-
-![Night Sky Page Mobile](assets/night-sky-page-mobile.png)
+<p align="center">
+  <img src="assets/weather-page-mobile.png" alt="Weather Page Mobile" width="30%"/>
+  <img src="assets/night-sky-page-mobile.png" alt="Night Sky Page Mobile" width="30%"/>
+</p>
 
 ## 🔑 Features
 
